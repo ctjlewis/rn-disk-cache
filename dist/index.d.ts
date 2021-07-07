@@ -1,9 +1,4 @@
 /**
- * @fileoverview
- * This file exports async functions that resolve to Token List data (either
- * live or loaded from disk cache).
- */
-/**
  * Cache an object on the filesystem for a given amount of time.
  *
  * @param name A tag that will be used to name the temp directory.

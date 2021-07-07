@@ -1,9 +1,3 @@
-/**
- * @fileoverview
- * This file exports async functions that resolve to Token List data (either
- * live or loaded from disk cache).
- */
-
 import { join } from 'path';
 import {
   DocumentDirectoryPath,

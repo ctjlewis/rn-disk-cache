@@ -2,7 +2,8 @@
 Cache an object to disk, and refresh the value after a certain amount of time.
 
 Under the hood, the data is stored as simple serialized `JSON.stringify()`
-output, at a file located at `{DocumentDirectoryPath}/{store}/{timestamp}`.
+output, at a file located at
+`{DocumentDirectoryPath}/__caches__/{store}/{timestamp}`.
 
 ### Example
 ```ts
