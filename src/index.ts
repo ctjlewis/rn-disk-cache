@@ -1,12 +1,13 @@
 import { join } from 'path';
-import {
+import fs from 'react-native-fs';
+const {
   DocumentDirectoryPath,
   mkdir,
   readDir,
   readFile,
   unlink,
   writeFile,
-} from 'react-native-fs';
+} = fs;
 
 /**
  * The directory where caches will be stored.
