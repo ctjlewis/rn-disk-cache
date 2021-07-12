@@ -65,6 +65,11 @@ export const fromDiskCache = async <T>(
     const cacheTimestamp = Date.now();
     const cacheFile = join(cachePath, `${cacheTimestamp}`);
     /**
+     * Start by opening the file as soon as possible once the program has
+     * committed to writing a new cache.
+     */
+    await writeFile(cacheFile, '');
+    /**
      * Delete all existing caches.
      */
     if (caches.length > 1) {
