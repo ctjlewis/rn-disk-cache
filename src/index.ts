@@ -66,6 +66,7 @@ export const fromDiskCache = async <T>(
     const cacheTimestamp = Date.now();
     const cacheFile = join(cachePath, `${cacheTimestamp}`);
     const serialized = JSON.stringify(cacheValue);
+    console.log('LENGTH', caches.length);
     /**
      * Delete all existing caches.
      */

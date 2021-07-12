@@ -62,6 +62,7 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60) => {
         const cacheTimestamp = Date.now();
         const cacheFile = path.join(cachePath, `${cacheTimestamp}`);
         const serialized = JSON.stringify(cacheValue);
+        console.log('LENGTH', caches.length);
         /**
          * Delete all existing caches.
          */
