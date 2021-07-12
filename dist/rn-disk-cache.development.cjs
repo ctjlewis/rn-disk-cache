@@ -58,11 +58,8 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60) => {
      */
     const writeCache = async () => {
         console.log('Writing new cache value.');
-        const cacheValue = await fn();
         const cacheTimestamp = Date.now();
         const cacheFile = path.join(cachePath, `${cacheTimestamp}`);
-        const serialized = JSON.stringify(cacheValue);
-        console.log('LENGTH', caches.length);
         /**
          * Delete all existing caches.
          */
@@ -74,6 +71,8 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60) => {
         /**
          * Write new cache and return.
          */
+        const cacheValue = await fn();
+        const serialized = JSON.stringify(cacheValue);
         await writeFile(cacheFile, serialized);
         return cacheValue;
     };
