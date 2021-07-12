@@ -36,11 +36,12 @@ export const fromDiskCache = async <T>(
   /**
    * Available caches in this store.
    */
-  const caches = await readDir(cachePath);
+  const cacheResults = await readDir(cachePath);
+  const caches = cacheResults.sort((a, b) => Number(b.name) - Number(a.name));
   /**
    * The most recent available cached value.
    */
-  const mostRecentCache = caches.sort()[caches.length - 1];
+  const mostRecentCache = caches[0];
   /**
    * The timestamp for the most recent cached value.
    */
@@ -68,9 +69,14 @@ export const fromDiskCache = async <T>(
     /**
      * Delete all existing caches.
      */
-    console.log('Deleting existing caches.');
-    for (const cache of caches) {
-      unlink(cache.path);
+    if (caches.length > 1) {
+      console.log('Deleting old caches.');
+      const cachesToDelete = caches.slice(1);
+      await Promise.all(
+        cachesToDelete.map(
+          async (cache) => await unlink(cache.path)
+        )
+      );
     }
     /**
      * Write new cache and return.
