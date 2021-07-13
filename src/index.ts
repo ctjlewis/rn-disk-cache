@@ -11,62 +11,21 @@ import { CacheStore } from './CacheStore';
  */
 export const fromDiskCache = async <T>(
   name: string,
-  fn: () => T | Promise<T>,
+  fn: (...args: any[]) => T | Promise<T>,
   seconds = 60 * 60,
-  ...args: []
+  ...args: any[]
 ): Promise<T> => {
   /**
-   * The time the function started executing.
+   * Initialize a reference to this cache store.
    */
-  const startTime = Date.now();
-  const cacheStore = new CacheStore<T>(name);
+  const cacheStore = new CacheStore<T>(name, seconds);
   /**
-   * Await and write the new value.
-   */
-  const updateStore = async () => {
-    const newValue = await fn(...args);
-    return await cacheStore.write(newValue);
-  };
-  /**
-   * Try to read from available caches. Clear all caches if an error is
-   * encountered.
+   * Read a cached version of the value, or write a new one if it doesn't exist
+   * and return that.
    */
   try {
-    const mostRecentCache = await cacheStore.getMostRecentCache();
-    const mostRecentTimestamp = !mostRecentCache
-      ? 0
-      : Number(mostRecentCache.name);
-    /**
-     * If no caches were found, write a new value.
-     */
-    if (!mostRecentCache) {
-      cacheStore.log('No caches found.');
-      return await updateStore();
-    }
-    /**
-     * If caches were found, determine if they're stale.
-     */
-    const secondsOld = (Date.now() - mostRecentTimestamp) / 1000;
-    const cacheIsStale = secondsOld >= seconds;
-    cacheStore.log(`Cache found. Age: ${secondsOld}s`);
-    /**
-     * If the cache is not stale, read the value and return it.
-     */
-    if (cacheIsStale) {
-      cacheStore.log('Cache is stale.');
-      return await updateStore();
-    } else {
-      cacheStore.log('Cache is not stale.');
-      return await cacheStore.read();
-    }
+    return await cacheStore.refresh(fn, ...args);
   } catch (error) {
-    cacheStore.log(
-      `Unrecoverable error. Files may be corrupted. Deleting all caches.`,
-      error
-    );
-    await cacheStore.deleteCaches(true);
-    throw new Error(`Error: ${error}`);
-  } finally {
-    cacheStore.log(`Finished in ${Date.now() - startTime}ms`);
+    throw new Error(`Error refreshing cache: ${error}`);
   }
 };
