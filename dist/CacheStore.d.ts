@@ -1,12 +1,13 @@
 /**
  * @fileoverview
  * This file uses a class, which is a highly unpopular pattern nowadays, but was
- * necessary to avoid argument juggling between functions.
+ * necessary to avoid argument juggling between functions, and overall easier
+ * state management.
  */
-import fs from 'react-native-fs';
-declare type Cache = fs.ReadDirItem;
 export declare class CacheStore<T> {
-    name: string;
+    private name;
+    private maxAge;
+    private silent;
     /**
      * The path to this cache at ${CACHE_DIR}/{name}.
      */
@@ -14,31 +15,32 @@ export declare class CacheStore<T> {
     /**
      * Set the cache directory for this store.
      */
-    constructor(name: string);
+    constructor(name: string, maxAge: number, silent?: boolean);
+    /**
+     * Try to read a non-stale cache, and if one doesn't exist, load a new one,
+     * cache it, and return it.
+     */
+    refresh(fn: (...args: any[]) => T | Promise<T>, ...args: any[]): Promise<T>;
     /**
      * Log messages and include the name of the cache.
      */
-    log(...msgs: any[]): this;
+    private log;
     /**
-     * Delete all caches except the most recent, unless `clean: true` is
+     * Ensure the cachePath exists, read any caches inside of it, and store it on
+     * `this.caches`.
+     */
+    private update;
+    /**
+     * Delete all caches except the most recent, unless `all: true` is
      * specified, in which case all caches will be deleted.
      */
-    deleteCaches: (clean: boolean) => Promise<this>;
+    private clean;
     /**
-     * List all caches in this store.
+     * Try to read a non-stale cache value. If one is not found, return `null`.
      */
-    private getCaches;
-    /**
-     * Get the most recent cache
-     */
-    getMostRecentCache: () => Promise<Cache>;
-    /**
-     * Read the most recent cached value.
-     */
-    read: () => Promise<any>;
+    private read;
     /**
      * Write the new value to the cache.
      */
-    write: (cacheValue: T) => Promise<T>;
+    private write;
 }
-export {};

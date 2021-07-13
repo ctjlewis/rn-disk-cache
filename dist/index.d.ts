@@ -1,10 +1,14 @@
+interface FromDiskCacheArgs<T> {
+    name: string;
+    refresh: (...args: any[]) => T | Promise<T>;
+    maxAge?: number;
+    silent?: boolean;
+}
 /**
- * Cache an object on the filesystem for a given amount of time.
+ * Cache an object on the filesystem, given a `name`, `refresh` (can be async),
+ * and `maxAge` (defaults to 1hr).
  *
- * @param name A tag that will be used to name the temp directory.
- * @param fn A function that returns, or Promise that resolves to, the object to
- * cache.
- * @param seconds The number of seconds to cache the object for.
- * @param args Passed to the async function via `await fn(...args)`.
+ * Pass `silent: true` to disable logs.
  */
-export declare const fromDiskCache: <T>(name: string, fn: () => T | Promise<T>, seconds?: number) => Promise<T>;
+export declare const fromDiskCache: <T>({ name, refresh, maxAge, silent, }: FromDiskCacheArgs<T>, ...args: any[]) => Promise<T>;
+export {};
