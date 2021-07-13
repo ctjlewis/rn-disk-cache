@@ -61,7 +61,8 @@ export const fromDiskCache = async <T>(
     }
   } catch (error) {
     console.log(
-      `Unrecoverable error. Files may be corrupted. Deleting all caches.`
+      `Unrecoverable error. Files may be corrupted. Deleting all caches.`,
+      error
     );
     await cacheStore.deleteCaches(true);
     throw new Error(`Error: ${error}`);
