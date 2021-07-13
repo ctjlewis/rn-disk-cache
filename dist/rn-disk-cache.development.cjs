@@ -143,7 +143,7 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60, ...args) => {
          */
         const secondsOld = (Date.now() - mostRecentTimestamp) / 1000;
         const cacheIsStale = secondsOld >= seconds;
-        cacheStore.log(`Caches found for store: ${name}`, { cacheIsStale, secondsOld });
+        cacheStore.log(`Cache found. Age: ${secondsOld}s`);
         /**
          * If the cache is not stale, read the value and return it.
          */
