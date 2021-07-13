@@ -63,7 +63,7 @@ export class CacheStore<T> {
   public read = async () => {
     console.log('Reading most recent cache value.');
     const mostRecentCache = await this.getMostRecentCache();
-    const fileContents = await readFile(mostRecentCache.name);
+    const fileContents = await readFile(mostRecentCache.path);
     const cacheValue = JSON.parse(fileContents);
     return cacheValue;
   };
