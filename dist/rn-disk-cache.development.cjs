@@ -9,11 +9,89 @@ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'defau
 
 var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
 
+/**
+ * @fileoverview
+ * This file uses a class, which is a highly unpopular pattern nowadays, but was
+ * necessary to avoid argument juggling between functions.
+ */
 const { DocumentDirectoryPath, mkdir, readDir, readFile, unlink, writeFile, } = fs__default['default'];
 /**
  * The directory where caches will be stored.
  */
 const CACHE_DIR = path.join(DocumentDirectoryPath, '__caches__');
+class CacheStore {
+    name;
+    /**
+     * The path to this cache at ${CACHE_DIR}/{name}.
+     */
+    cachePath;
+    /**
+     * Set the cache directory for this store.
+     */
+    constructor(name) {
+        this.name = name;
+        this.cachePath = path.join(CACHE_DIR, this.name);
+    }
+    /**
+     * List all caches in this store.
+     */
+    getCaches = async () => {
+        /**
+         * Make sure this cache directory exists.
+         */
+        await mkdir(this.cachePath);
+        /**
+         * Find available caches and sort them by increasing age.
+         */
+        const cacheResults = await readDir(this.cachePath);
+        return cacheResults.sort((a, b) => Number(b.name) - Number(a.name));
+    };
+    /**
+     * Get the most recent cache
+     */
+    getMostRecentCache = async () => {
+        const caches = await this.getCaches();
+        return caches[0];
+    };
+    /**
+     * Read the most recent cached value.
+     */
+    read = async () => {
+        console.log('Reading most recent cache value.');
+        const mostRecentCache = await this.getMostRecentCache();
+        const fileContents = await readFile(mostRecentCache.name);
+        const cacheValue = JSON.parse(fileContents);
+        return cacheValue;
+    };
+    /**
+     * Write the new value to the cache.
+     */
+    write = async (cacheValue) => {
+        console.log('Writing new cache value.');
+        const cacheFile = path.join(this.cachePath, `${Date.now()}`);
+        /**
+         * Delete all except the most recent cache.
+         */
+        await this.deleteCaches(false);
+        /**
+         * Write new cache and return.
+         */
+        const serialized = JSON.stringify(cacheValue);
+        await writeFile(cacheFile, serialized);
+        return cacheValue;
+    };
+    /**
+     * Delete all caches except the most recent, unless `clean: true` is
+     * specified, in which case all caches will be deleted.
+     */
+    deleteCaches = async (clean) => {
+        console.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
+        const caches = await this.getCaches();
+        const cachesToDelete = clean ? caches : caches.slice(1);
+        await Promise.all(cachesToDelete.map(async (cache) => await unlink(cache.path)));
+    };
+}
+
 /**
  * Cache an object on the filesystem for a given amount of time.
  *
@@ -21,89 +99,62 @@ const CACHE_DIR = path.join(DocumentDirectoryPath, '__caches__');
  * @param fn A function that returns, or Promise that resolves to, the object to
  * cache.
  * @param seconds The number of seconds to cache the object for.
+ * @param args Passed to the async function via `await fn(...args)`.
  */
-const fromDiskCache = async (name, fn, seconds = 60 * 60) => {
+const fromDiskCache = async (name, fn, seconds = 60 * 60, ...args) => {
     /**
-     * The path to this cache, i.e. ${CACHE_DIR}/myCache. Create it if it doesn't
-     * exist.
+     * The time the function started executing.
      */
-    const cachePath = path.join(CACHE_DIR, name);
-    await mkdir(cachePath);
+    const startTime = Date.now();
+    const cacheStore = new CacheStore(name);
     /**
-     * Available caches in this store.
+     * Await and write the new value.
      */
-    const cacheResults = await readDir(cachePath);
-    const caches = cacheResults.sort((a, b) => Number(b.name) - Number(a.name));
-    /**
-     * The most recent available cached value.
-     */
-    const mostRecentCache = caches[0];
-    /**
-     * The timestamp for the most recent cached value.
-     */
-    const mostRecentTimestamp = !mostRecentCache
-        ? 0
-        : Number(mostRecentCache.name);
-    /**
-     * Read the most recent cached value.
-     */
-    const readCache = async () => {
-        console.log('Reading most recent cache value.');
-        const cacheFile = path.join(cachePath, mostRecentCache.name);
-        const cacheValue = JSON.parse(await readFile(cacheFile));
-        return cacheValue;
+    const updateStore = async () => {
+        const newValue = await fn(...args);
+        return await cacheStore.write(newValue);
     };
     /**
-     * Write the new value to the cache.
+     * Try to read from available caches. Clear all caches if an error is
+     * encountered.
      */
-    const writeCache = async () => {
-        console.log('Writing new cache value.');
-        const cacheTimestamp = Date.now();
-        const cacheFile = path.join(cachePath, `${cacheTimestamp}`);
+    try {
+        const mostRecentCache = await cacheStore.getMostRecentCache();
+        const mostRecentTimestamp = !mostRecentCache
+            ? 0
+            : Number(mostRecentCache.name);
         /**
-         * Start by opening the file as soon as possible once the program has
-         * committed to writing a new cache.
+         * If no caches were found, write a new value.
          */
-        await writeFile(cacheFile, '');
-        /**
-         * Delete all existing caches.
-         */
-        if (caches.length > 1) {
-            console.log('Deleting old caches.');
-            const cachesToDelete = caches.slice(1);
-            await Promise.all(cachesToDelete.map(async (cache) => await unlink(cache.path)));
+        if (!mostRecentCache) {
+            console.log('No caches found.');
+            return await updateStore();
         }
         /**
-         * Write new cache and return.
+         * If caches were found, determine if they're stale.
          */
-        const cacheValue = await fn();
-        const serialized = JSON.stringify(cacheValue);
-        await writeFile(cacheFile, serialized);
-        return cacheValue;
-    };
-    /**
-     * If no caches were found, write a new value.
-     */
-    if (!caches.length) {
-        console.log('No caches found.');
-        return await writeCache();
+        const secondsOld = (Date.now() - mostRecentTimestamp) / 1000;
+        const cacheIsStale = secondsOld >= seconds;
+        console.log(`Caches found for store: ${name}`, { cacheIsStale, secondsOld });
+        /**
+         * If the cache is not stale, read the value and return it.
+         */
+        if (cacheIsStale) {
+            console.log('Cache is stale.');
+            return await updateStore();
+        }
+        else {
+            console.log('Cache is not stale.');
+            return await cacheStore.read();
+        }
     }
-    /**
-     * If caches were found, determine if they're stale.
-     */
-    const secondsOld = (Date.now() - mostRecentTimestamp) / 1000;
-    const cacheIsStale = secondsOld >= seconds;
-    console.log(`Caches found for store: ${name}`, { cacheIsStale, secondsOld });
-    /**
-     * If the cache is not stale, read the value and return it.
-     */
-    if (cacheIsStale) {
-        console.log('Cache is stale.');
-        return await writeCache();
+    catch (error) {
+        console.log(`Unrecoverable error. Files may be corrupted. Deleting all caches.`);
+        await cacheStore.deleteCaches(true);
+        throw new Error(`Error: ${error}`);
     }
-    else {
-        console.log('Cache is not stale.');
-        return await readCache();
+    finally {
+        console.log(`Finished in ${Date.now() - startTime}ms`);
     }
 };
 

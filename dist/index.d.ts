@@ -5,5 +5,6 @@
  * @param fn A function that returns, or Promise that resolves to, the object to
  * cache.
  * @param seconds The number of seconds to cache the object for.
+ * @param args Passed to the async function via `await fn(...args)`.
  */
 export declare const fromDiskCache: <T>(name: string, fn: () => T | Promise<T>, seconds?: number) => Promise<T>;
