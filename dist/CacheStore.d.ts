@@ -16,13 +16,18 @@ export declare class CacheStore<T> {
      */
     constructor(name: string);
     /**
-     * List all caches in this store.
-     */
-    private getCaches;
-    /**
      * Log messages and include the name of the cache.
      */
     log(...msgs: any[]): this;
+    /**
+     * Delete all caches except the most recent, unless `clean: true` is
+     * specified, in which case all caches will be deleted.
+     */
+    deleteCaches: (clean: boolean) => Promise<this>;
+    /**
+     * List all caches in this store.
+     */
+    private getCaches;
     /**
      * Get the most recent cache
      */
@@ -35,10 +40,5 @@ export declare class CacheStore<T> {
      * Write the new value to the cache.
      */
     write: (cacheValue: T) => Promise<T>;
-    /**
-     * Delete all caches except the most recent, unless `clean: true` is
-     * specified, in which case all caches will be deleted.
-     */
-    deleteCaches: (clean: boolean) => Promise<void>;
 }
 export {};
