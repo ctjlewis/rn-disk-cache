@@ -47,6 +47,13 @@ class CacheStore {
         return cacheResults.sort((a, b) => Number(b.name) - Number(a.name));
     };
     /**
+     * Log messages and include the name of the cache.
+     */
+    log(...msgs) {
+        console.log(`CACHE [${this.name}]`, ...msgs);
+        return this;
+    }
+    /**
      * Get the most recent cache
      */
     getMostRecentCache = async () => {
@@ -57,17 +64,23 @@ class CacheStore {
      * Read the most recent cached value.
      */
     read = async () => {
-        console.log('Reading most recent cache value.');
-        const mostRecentCache = await this.getMostRecentCache();
-        const fileContents = await readFile(mostRecentCache.name);
-        const cacheValue = JSON.parse(fileContents);
-        return cacheValue;
+        this.log('Reading most recent cache value.');
+        try {
+            const mostRecentCache = await this.getMostRecentCache();
+            this.log(mostRecentCache.path);
+            const fileContents = await readFile(mostRecentCache.path);
+            const cacheValue = JSON.parse(fileContents);
+            return cacheValue;
+        }
+        catch (error) {
+            this.log('Error reading file', error);
+        }
     };
     /**
      * Write the new value to the cache.
      */
     write = async (cacheValue) => {
-        console.log('Writing new cache value.');
+        this.log('Writing new cache value.');
         const cacheFile = path.join(this.cachePath, `${Date.now()}`);
         /**
          * Delete all except the most recent cache.
@@ -85,7 +98,7 @@ class CacheStore {
      * specified, in which case all caches will be deleted.
      */
     deleteCaches = async (clean) => {
-        console.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
+        this.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
         const caches = await this.getCaches();
         const cachesToDelete = clean ? caches : caches.slice(1);
         await Promise.all(cachesToDelete.map(async (cache) => await unlink(cache.path)));
@@ -127,7 +140,7 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60, ...args) => {
          * If no caches were found, write a new value.
          */
         if (!mostRecentCache) {
-            console.log('No caches found.');
+            cacheStore.log('No caches found.');
             return await updateStore();
         }
         /**
@@ -135,26 +148,26 @@ const fromDiskCache = async (name, fn, seconds = 60 * 60, ...args) => {
          */
         const secondsOld = (Date.now() - mostRecentTimestamp) / 1000;
         const cacheIsStale = secondsOld >= seconds;
-        console.log(`Caches found for store: ${name}`, { cacheIsStale, secondsOld });
+        cacheStore.log(`Caches found for store: ${name}`, { cacheIsStale, secondsOld });
         /**
          * If the cache is not stale, read the value and return it.
          */
         if (cacheIsStale) {
-            console.log('Cache is stale.');
+            cacheStore.log('Cache is stale.');
             return await updateStore();
         }
         else {
-            console.log('Cache is not stale.');
+            cacheStore.log('Cache is not stale.');
             return await cacheStore.read();
         }
     }
     catch (error) {
-        console.log(`Unrecoverable error. Files may be corrupted. Deleting all caches.`, error);
+        cacheStore.log(`Unrecoverable error. Files may be corrupted. Deleting all caches.`, error);
         await cacheStore.deleteCaches(true);
         throw new Error(`Error: ${error}`);
     }
     finally {
-        console.log(`Finished in ${Date.now() - startTime}ms`);
+        cacheStore.log(`Finished in ${Date.now() - startTime}ms`);
     }
 };
 

@@ -20,6 +20,10 @@ export declare class CacheStore<T> {
      */
     private getCaches;
     /**
+     * Log messages and include the name of the cache.
+     */
+    log(...msgs: any[]): this;
+    /**
      * Get the most recent cache
      */
     getMostRecentCache: () => Promise<Cache>;

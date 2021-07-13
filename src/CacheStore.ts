@@ -51,6 +51,13 @@ export class CacheStore<T> {
     );
   }
   /**
+   * Log messages and include the name of the cache.
+   */
+  public log(...msgs: any[]) {
+    console.log(`CACHE [${this.name}]`, ...msgs);
+    return this;
+  }
+  /**
    * Get the most recent cache 
    */
   public getMostRecentCache = async (): Promise<Cache> => {
@@ -61,22 +68,23 @@ export class CacheStore<T> {
    * Read the most recent cached value.
    */
   public read = async () => {
-    console.log('Reading most recent cache value.');
+    this.log('Reading most recent cache value.');
     try {
-    const mostRecentCache = await this.getMostRecentCache();
-    const fileContents = await readFile(mostRecentCache.path);
-    const cacheValue = JSON.parse(fileContents);
-    
-    return cacheValue;
+      const mostRecentCache = await this.getMostRecentCache();
+      this.log(mostRecentCache.path);
+      const fileContents = await readFile(mostRecentCache.path);
+      const cacheValue = JSON.parse(fileContents);
+
+      return cacheValue;
     } catch (error) {
-      console.log('Error reading file', error);
+      this.log('Error reading file', error);
     }
   };
   /**
    * Write the new value to the cache.
    */
   public write = async (cacheValue: T) => {
-    console.log('Writing new cache value.');
+    this.log('Writing new cache value.');
     const cacheFile = join(this.cachePath, `${Date.now()}`);
     /**
      * Delete all except the most recent cache.
@@ -94,7 +102,7 @@ export class CacheStore<T> {
    * specified, in which case all caches will be deleted.
    */
   public deleteCaches = async (clean: boolean) => {
-    console.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
+    this.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
     const caches = await this.getCaches();
     const cachesToDelete = clean ? caches : caches.slice(1);
     await Promise.all(
