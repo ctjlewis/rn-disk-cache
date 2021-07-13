@@ -35,6 +35,28 @@ export class CacheStore<T> {
     this.cachePath = join(CACHE_DIR, this.name);
   }
   /**
+   * Log messages and include the name of the cache.
+   */
+  public log(...msgs: any[]) {
+    console.log(`CACHE [${this.name}]`, ...msgs);
+    return this;
+  }
+  /**
+   * Delete all caches except the most recent, unless `clean: true` is
+   * specified, in which case all caches will be deleted.
+   */
+  public deleteCaches = async (clean: boolean) => {
+    this.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
+    const caches = await this.getCaches();
+    const cachesToDelete = clean ? caches : caches.slice(1);
+    await Promise.all(
+      cachesToDelete.map(
+        async (cache) => await unlink(cache.path)
+      )
+    );
+    return this;
+  }
+  /**
    * List all caches in this store.
    */
   private getCaches = async (): Promise<Cache[]> => {
@@ -51,13 +73,6 @@ export class CacheStore<T> {
     );
   }
   /**
-   * Log messages and include the name of the cache.
-   */
-  public log(...msgs: any[]) {
-    console.log(`CACHE [${this.name}]`, ...msgs);
-    return this;
-  }
-  /**
    * Get the most recent cache 
    */
   public getMostRecentCache = async (): Promise<Cache> => {
@@ -69,16 +84,11 @@ export class CacheStore<T> {
    */
   public read = async () => {
     this.log('Reading most recent cache value.');
-    try {
-      const mostRecentCache = await this.getMostRecentCache();
-      this.log(mostRecentCache.path);
-      const fileContents = await readFile(mostRecentCache.path);
-      const cacheValue = JSON.parse(fileContents);
+    const mostRecentCache = await this.getMostRecentCache();
+    const fileContents = await readFile(mostRecentCache.path);
+    const cacheValue = JSON.parse(fileContents);
 
-      return cacheValue;
-    } catch (error) {
-      this.log('Error reading file', error);
-    }
+    return cacheValue;
   };
   /**
    * Write the new value to the cache.
@@ -97,18 +107,4 @@ export class CacheStore<T> {
     await writeFile(cacheFile, serialized);
     return cacheValue;
   };
-  /**
-   * Delete all caches except the most recent, unless `clean: true` is
-   * specified, in which case all caches will be deleted.
-   */
-  public deleteCaches = async (clean: boolean) => {
-    this.log(`Deleting ${clean ? 'all' : 'old'} caches.`);
-    const caches = await this.getCaches();
-    const cachesToDelete = clean ? caches : caches.slice(1);
-    await Promise.all(
-      cachesToDelete.map(
-        async (cache) => await unlink(cache.path)
-      )
-    );
-  }
 }
