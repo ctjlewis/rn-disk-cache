@@ -62,10 +62,15 @@ export class CacheStore<T> {
    */
   public read = async () => {
     console.log('Reading most recent cache value.');
+    try {
     const mostRecentCache = await this.getMostRecentCache();
     const fileContents = await readFile(mostRecentCache.path);
     const cacheValue = JSON.parse(fileContents);
+    
     return cacheValue;
+    } catch (error) {
+      console.log('Error reading file', error);
+    }
   };
   /**
    * Write the new value to the cache.
