@@ -1,30 +1,37 @@
 import { CacheStore } from './CacheStore';
 
+interface FromDiskCacheArgs<T>{
+  name: string;
+  refresh: (...args: any[]) => T | Promise<T>;
+  maxAge?: number;
+  silent?: boolean;
+}
+
 /**
- * Cache an object on the filesystem for a given amount of time.
+ * Cache an object on the filesystem, given a `name`, `refresh` (can be async),
+ * and `maxAge` (defaults to 1hr).
  *
- * @param name A tag that will be used to name the temp directory.
- * @param fn A function that returns, or Promise that resolves to, the object to
- * cache.
- * @param seconds The number of seconds to cache the object for.
- * @param args Passed to the async function via `await fn(...args)`.
+ * Pass `silent: true` to disable logs.
  */
 export const fromDiskCache = async <T>(
-  name: string,
-  fn: (...args: any[]) => T | Promise<T>,
-  seconds = 60 * 60,
+  {
+    name,
+    refresh,
+    maxAge = 60 * 60,
+    silent = false,
+  }: FromDiskCacheArgs<T>,
   ...args: any[]
 ): Promise<T> => {
   /**
    * Initialize a reference to this cache store.
    */
-  const cacheStore = new CacheStore<T>(name, seconds);
+  const cacheStore = new CacheStore<T>(name, maxAge, silent);
   /**
    * Read a cached version of the value, or write a new one if it doesn't exist
    * and return that.
    */
   try {
-    return await cacheStore.refresh(fn, ...args);
+    return await cacheStore.refresh(refresh, ...args);
   } catch (error) {
     throw new Error(`Error refreshing cache: ${error}`);
   }
