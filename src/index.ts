@@ -31,7 +31,7 @@ export const fromDiskCache = async <T>(
    * and return that.
    */
   try {
-    return await cacheStore.refresh(refresh, ...args);
+    return await cacheStore.poll(refresh, ...args);
   } catch (error) {
     throw new Error(`Error refreshing cache: ${error}`);
   }
