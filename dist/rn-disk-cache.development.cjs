@@ -187,7 +187,7 @@ class CacheStore {
      * This is delayed by a random amount of time, up to 100ms, to support
      * concurrency.
      */
-    async poll(fn, ...args) {
+    async poll(fn) {
         /**
          * The time the function started executing.
          */
@@ -199,7 +199,7 @@ class CacheStore {
                 return value;
             }
             else {
-                const { value } = await this.write(await fn(...args));
+                const { value } = await this.write(await fn());
                 return value;
             }
         }

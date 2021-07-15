@@ -69,5 +69,5 @@ export declare class CacheStore<T> {
      * This is delayed by a random amount of time, up to 100ms, to support
      * concurrency.
      */
-    poll(fn: (...args: any[]) => T | Promise<T>, ...args: any[]): Promise<T>;
+    poll(fn: (...args: any[]) => T | Promise<T>): Promise<T>;
 }

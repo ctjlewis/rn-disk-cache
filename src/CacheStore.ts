@@ -181,7 +181,6 @@ export class CacheStore<T> {
        */
       await this.waitForUnlock();
       this.log('Writing new cache value.');
-
       /**
        * Delete all except the most recent cache and set the lockfile.
        */
@@ -207,7 +206,7 @@ export class CacheStore<T> {
    */
   public async poll(
     fn: (...args: any[]) => T | Promise<T>,
-    ...args: any[]
+    // ...args: any[]
   ) {
     /**
      * The time the function started executing.
@@ -219,7 +218,7 @@ export class CacheStore<T> {
         const { value } = cacheValue;
         return value;
       } else {
-        const { value } = await this.write(await fn(...args));
+        const { value } = await this.write(await fn());
         return value;
       }
     } catch (error) {
