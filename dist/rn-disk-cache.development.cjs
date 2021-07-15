@@ -75,7 +75,21 @@ class CacheStore {
      */
     async waitForUnlock() {
         this.log('Waiting for unlock...');
-        return await new Promise((resolve) => {
+        return await new Promise(async (resolve) => {
+            const checkForUnlock = async () => {
+                if (!(await this.isLocked())) {
+                    resolve(true);
+                }
+                else {
+                    setTimeout(checkForUnlock, 100 * Math.random());
+                }
+            };
+            /**
+             * Start checking for a missing lockfile. If a minute passes with no
+             * unlock, assume the process was interrupted and delete it.
+             */
+            setTimeout(async () => await this.unlock(), 60 * 1000);
+            await checkForUnlock();
         });
     }
     /**
