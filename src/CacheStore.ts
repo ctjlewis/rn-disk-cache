@@ -139,7 +139,7 @@ export class CacheStore<T> {
     this.log(`Deleting ${all ? 'all' : 'old'} caches.`);
 
     const caches = await this.getCaches();
-    const cachesToDelete = (all ? caches : caches.slice(1)) ?? [];
+    const cachesToDelete = all ? caches : caches.slice(1);
     await Promise.all(
       cachesToDelete.map(
         async (cache) => await unlink(cache.path)
@@ -206,7 +206,7 @@ export class CacheStore<T> {
    */
   public async poll(
     fn: (...args: any[]) => T | Promise<T>,
-    // ...args: any[]
+    ...args: any[]
   ) {
     /**
      * The time the function started executing.
@@ -218,7 +218,7 @@ export class CacheStore<T> {
         const { value } = cacheValue;
         return value;
       } else {
-        const { value } = await this.write(await fn());
+        const { value } = await this.write(await fn(...args));
         return value;
       }
     } catch (error) {

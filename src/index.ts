@@ -16,7 +16,7 @@ interface FromDiskCacheArgs<T>{
 export const fromDiskCache = async <T>(
   {
     name,
-    poll: refresh,
+    poll,
     maxAge = 60 * 60,
     silent = false,
   }: FromDiskCacheArgs<T>,
@@ -31,7 +31,7 @@ export const fromDiskCache = async <T>(
    * and return that.
    */
   try {
-    return await cacheStore.poll(refresh, ...args);
+    return await cacheStore.poll(poll, ...args);
   } catch (error) {
     throw new Error(`Error refreshing cache: ${error}`);
   }

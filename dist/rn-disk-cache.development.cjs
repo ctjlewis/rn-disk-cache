@@ -125,7 +125,7 @@ class CacheStore {
     async clean(all) {
         this.log(`Deleting ${all ? 'all' : 'old'} caches.`);
         const caches = await this.getCaches();
-        const cachesToDelete = (all ? caches : caches.slice(1)) ?? [];
+        const cachesToDelete = all ? caches : caches.slice(1);
         await Promise.all(cachesToDelete.map(async (cache) => await unlink(cache.path)));
     }
     /**
@@ -187,7 +187,7 @@ class CacheStore {
      * This is delayed by a random amount of time, up to 100ms, to support
      * concurrency.
      */
-    async poll(fn) {
+    async poll(fn, ...args) {
         /**
          * The time the function started executing.
          */
@@ -199,7 +199,7 @@ class CacheStore {
                 return value;
             }
             else {
-                const { value } = await this.write(await fn());
+                const { value } = await this.write(await fn(...args));
                 return value;
             }
         }
@@ -220,7 +220,7 @@ class CacheStore {
  *
  * Pass `silent: true` to disable logs.
  */
-const fromDiskCache = async ({ name, poll: refresh, maxAge = 60 * 60, silent = false, }, ...args) => {
+const fromDiskCache = async ({ name, poll, maxAge = 60 * 60, silent = false, }, ...args) => {
     /**
      * Initialize a reference to this cache store.
      */
@@ -230,7 +230,7 @@ const fromDiskCache = async ({ name, poll: refresh, maxAge = 60 * 60, silent = f
      * and return that.
      */
     try {
-        return await cacheStore.poll(refresh, ...args);
+        return await cacheStore.poll(poll, ...args);
     }
     catch (error) {
         throw new Error(`Error refreshing cache: ${error}`);
