@@ -88,7 +88,7 @@ class CacheStore {
              * Start checking for a missing lockfile. If a minute passes with no
              * unlock, assume the process was interrupted and delete it.
              */
-            setTimeout(async () => await this.unlock(), 60 * 1000);
+            // setTimeout(async () => await this.unlock(), 60 * 1000);
             await checkForUnlock();
         });
     }
@@ -178,7 +178,6 @@ class CacheStore {
              * Wait for unlock, then resume.
              */
             await this.waitForUnlock();
-            this.log('Writing new cache value.');
             /**
              * Delete all except the most recent cache and set the lockfile.
              */
@@ -187,6 +186,7 @@ class CacheStore {
             /**
              * Write new cache and unlock the directory.
              */
+            this.log('Writing new cache value.');
             const file = path.join(this.cachePath, `${Date.now()}`);
             const serialized = JSON.stringify(value);
             await writeFile(file, serialized);
@@ -247,7 +247,8 @@ const fromDiskCache = async ({ name, poll, maxAge = 60 * 60, silent = false, }, 
         return await cacheStore.poll(poll, ...args);
     }
     catch (error) {
-        throw new Error(`Error refreshing cache: ${error}`);
+        console.trace({ error });
+        throw new Error(`Error refreshing cache`);
     }
 };
 

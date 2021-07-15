@@ -87,7 +87,7 @@ export class CacheStore<T> {
        * Start checking for a missing lockfile. If a minute passes with no
        * unlock, assume the process was interrupted and delete it.
        */
-      setTimeout(async () => await this.unlock(), 60*1000);
+      // setTimeout(async () => await this.unlock(), 60 * 1000);
       await checkForUnlock();
     });
   }
@@ -141,7 +141,7 @@ export class CacheStore<T> {
    * Delete all caches except the most recent, unless `all: true` is
    * specified, in which case all caches will be deleted.
    */
-   private async clean(all: boolean) {
+  private async clean(all: boolean) {
     this.log(`Deleting ${all ? 'all' : 'old'} caches.`);
 
     const caches = await this.getCaches();
@@ -186,7 +186,6 @@ export class CacheStore<T> {
        * Wait for unlock, then resume.
        */
       await this.waitForUnlock();
-      this.log('Writing new cache value.');
       /**
        * Delete all except the most recent cache and set the lockfile.
        */
@@ -195,6 +194,7 @@ export class CacheStore<T> {
       /**
        * Write new cache and unlock the directory.
        */
+      this.log('Writing new cache value.');
       const file = join(this.cachePath, `${Date.now()}`);
       const serialized = JSON.stringify(value);
       await writeFile(file, serialized);

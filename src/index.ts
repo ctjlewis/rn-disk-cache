@@ -1,6 +1,6 @@
 import { CacheStore } from './CacheStore';
 
-interface FromDiskCacheArgs<T>{
+interface FromDiskCacheArgs<T> {
   name: string;
   poll: (...args: any[]) => T | Promise<T>;
   maxAge?: number;
@@ -33,6 +33,7 @@ export const fromDiskCache = async <T>(
   try {
     return await cacheStore.poll(poll, ...args);
   } catch (error) {
-    throw new Error(`Error refreshing cache: ${error}`);
+    console.trace({ error });
+    throw new Error(`Error refreshing cache`);
   }
 };
