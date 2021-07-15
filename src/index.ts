@@ -2,7 +2,7 @@ import { CacheStore } from './CacheStore';
 
 interface FromDiskCacheArgs<T>{
   name: string;
-  refresh: (...args: any[]) => T | Promise<T>;
+  poll: (...args: any[]) => T | Promise<T>;
   maxAge?: number;
   silent?: boolean;
 }
@@ -16,7 +16,7 @@ interface FromDiskCacheArgs<T>{
 export const fromDiskCache = async <T>(
   {
     name,
-    refresh,
+    poll: refresh,
     maxAge = 60 * 60,
     silent = false,
   }: FromDiskCacheArgs<T>,

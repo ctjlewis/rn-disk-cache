@@ -220,7 +220,7 @@ class CacheStore {
  *
  * Pass `silent: true` to disable logs.
  */
-const fromDiskCache = async ({ name, refresh, maxAge = 60 * 60, silent = false, }, ...args) => {
+const fromDiskCache = async ({ name, poll: refresh, maxAge = 60 * 60, silent = false, }, ...args) => {
     /**
      * Initialize a reference to this cache store.
      */

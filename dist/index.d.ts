@@ -1,6 +1,6 @@
 interface FromDiskCacheArgs<T> {
     name: string;
-    refresh: (...args: any[]) => T | Promise<T>;
+    poll: (...args: any[]) => T | Promise<T>;
     maxAge?: number;
     silent?: boolean;
 }
@@ -10,5 +10,5 @@ interface FromDiskCacheArgs<T> {
  *
  * Pass `silent: true` to disable logs.
  */
-export declare const fromDiskCache: <T>({ name, refresh, maxAge, silent, }: FromDiskCacheArgs<T>, ...args: any[]) => Promise<T>;
+export declare const fromDiskCache: <T>({ name, poll: refresh, maxAge, silent, }: FromDiskCacheArgs<T>, ...args: any[]) => Promise<T>;
 export {};
