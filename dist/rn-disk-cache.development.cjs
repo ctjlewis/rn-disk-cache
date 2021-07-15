@@ -125,7 +125,7 @@ class CacheStore {
     async clean(all) {
         this.log(`Deleting ${all ? 'all' : 'old'} caches.`);
         const caches = await this.getCaches();
-        const cachesToDelete = all ? caches : caches.slice(1);
+        const cachesToDelete = (all ? caches : caches.slice(1)) ?? [];
         await Promise.all(cachesToDelete.map(async (cache) => await unlink(cache.path)));
     }
     /**
